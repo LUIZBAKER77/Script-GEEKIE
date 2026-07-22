@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Dados escolares e resultados
+*.xlsx
+*.xls
+*.csv
+resultados/
+arquivo_antigo/
+relatorios/
+logs/
+
+# Navegador e autenticação
+chrome_profile/
+user_data/
+cookies/
+*.crx
+
+# Segredos e configuração local
+.env
+.env.*
+credentials.json
+secrets.json
+*.pem
+*.key
+
+# Editores e sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
