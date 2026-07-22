@@ -1,40 +1,54 @@
-# Automacao Geekie
+# Automação Geekie
 
-Esta pasta e o kit para repetir o processo em outras turmas/planilhas.
+Kit privado de automação para rotinas administrativas no Geekie One, incluindo correção de turmas, criação de contas e auditoria de alunos.
 
-## Como usar
+## Funcionalidades
 
-Abra o arquivo:
-
-```bat
-geekie.bat
-```
-
-O menu pergunta primeiro o que voce quer fazer:
-
-1. Corrigir turma / criar contas
-2. Auditar alunos
-3. Corrigir pendentes da auditoria
-
-Depois ele mostra as planilhas `.xlsx` que estao nesta pasta, detecta as abas de anos/series da planilha escolhida e pergunta qual aba voce quer usar.
-
-Tambem pergunta a linha inicial. Normalmente deixe `2`.
+- correção de turma e ativação de material;
+- criação e ajuste de contas;
+- auditoria de login, senha e turma;
+- correção dos registros pendentes;
+- seleção interativa de planilha, aba e linha inicial;
+- geração de resultados de auditoria.
 
 ## Arquivos principais
 
-- `geekie.bat`: menu principal.
-- `menu_geekie.py`: detecta planilhas/abas e chama o script certo.
-- `geekie_automation.py`: corrige turma, ativa material e cria/ajusta contas.
-- `auditoria_geekie.py`: audita login, senha e turma.
-- `corrigir_pendentes.py`: tenta corrigir os erros encontrados na auditoria.
-- `Códigos para o Geekie Teste.xlsx`: planilha local atual.
-- `chrome_profile`: perfil usado pelo Chrome do script. Nao apague se quiser manter login.
-- `resultados`: onde ficam os arquivos de auditoria gerados.
-- `arquivo_antigo`: tentativas antigas e arquivos temporarios.
+| Arquivo | Finalidade |
+| --- | --- |
+| `geekie.bat` | inicia o menu principal |
+| `menu_geekie.py` | seleciona planilha, aba e operação |
+| `geekie_automation.py` | executa correções e criação de contas |
+| `auditoria_geekie.py` | audita os dados dos alunos |
+| `corrigir_pendentes.py` | tenta corrigir pendências encontradas |
 
-## Observacoes
+## Como usar
 
-- Se trocar a planilha, coloque o novo `.xlsx` nesta pasta.
-- Se pedir login, faca login na janela do Chrome aberta pelo script e pressione Enter no terminal.
-- A senha padrao usada pelo script e `REMOVIDO`.
-- Os scripts salvam a planilha original depois de cada aluno concluido.
+1. mantenha os arquivos `.xlsx` de trabalho apenas na pasta local;
+2. execute `geekie.bat`;
+3. escolha a operação;
+4. selecione a planilha e a aba;
+5. confirme a linha inicial — normalmente `2`;
+6. acompanhe o processamento pelo terminal.
+
+Se o Geekie solicitar autenticação, faça login na janela do Chrome aberta pela automação e retorne ao terminal.
+
+## Dados locais
+
+Os seguintes itens não devem ser enviados ao GitHub:
+
+- planilhas com dados de alunos;
+- perfis do Chrome e sessões autenticadas;
+- resultados de auditoria;
+- arquivos antigos ou temporários;
+- senhas e credenciais.
+
+Esses caminhos estão cobertos pelo `.gitignore`. Não documente senhas reais ou padrão no repositório.
+
+## Requisitos
+
+- Windows;
+- Python 3;
+- Google Chrome;
+- dependências Python utilizadas pelos scripts.
+
+> Repositório privado com finalidade administrativa. Revise os dados antes de compartilhar arquivos ou conceder acesso.
