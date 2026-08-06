@@ -13,14 +13,17 @@ resultados/
 arquivo_antigo/
 relatorios/
 logs/
+*.html
+*.png
 
-# Navegador e autenticação
+# Navegador e autenticacao
 chrome_profile/
+node_modules/
 user_data/
 cookies/
 *.crx
 
-# Segredos e configuração local
+# Segredos e configuracao local
 .env
 .env.*
 credentials.json
@@ -33,3 +36,4 @@ secrets.json
 .idea/
 .DS_Store
 Thumbs.db
+~$*

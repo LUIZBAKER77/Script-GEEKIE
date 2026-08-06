@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import re
 import shutil
 import sys
@@ -22,7 +23,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 LAB_URL = "https://educadores.geekieteste.geekie.com.br/"
 ONE_URL = "https://one.geekie.com.br/"
-PASSWORD = "REMOVIDO"
+PASSWORD = os.environ.get("GEEKIE_PASSWORD", "REMOVIDO")
 PROFILE = Path(__file__).with_name("chrome_profile")
 CHROME_USER_DATA = Path.home() / "AppData/Local/Google/Chrome/User Data"
 ERRORS = Path(__file__).with_name("erros.csv")

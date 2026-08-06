@@ -30,6 +30,8 @@ Kit privado de automação para rotinas administrativas no Geekie One, incluindo
 5. confirme a linha inicial — normalmente `2`;
 6. acompanhe o processamento pelo terminal.
 
+Ao iniciar, o `geekie.bat` pergunta qual senha padrao deve ser usada naquela execucao.
+
 Se o Geekie solicitar autenticação, faça login na janela do Chrome aberta pela automação e retorne ao terminal.
 
 ## Dados locais
