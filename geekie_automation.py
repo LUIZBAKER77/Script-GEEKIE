@@ -196,6 +196,7 @@ def fill_field(driver_or_field, value_or_field=None, value=None):
                 setter.call(el, val);
                 
                 // Dispara eventos nativos para o framework detectar a mudanÃ§a
+                el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: val }));
                 el.dispatchEvent(new Event('input', { bubbles: true }));
                 el.dispatchEvent(new Event('change', { bubbles: true }));
                 el.dispatchEvent(new Event('blur', { bubbles: true }));
@@ -228,15 +229,22 @@ def class_parts(class_code):
 def ensure_one_logged_out(driver):
     driver.get(ONE_URL)
     time.sleep(2)
+    # A versao nova abre diretamente nos campos de usuario e senha.
+    try:
+        one_login_fields(driver, 2)
+        return
+    except TimeoutException:
+        pass
     if driver.find_elements(By.XPATH, "//*[normalize-space()='Com uma conta Geekie One']"):
         return
     try:
         profile = wait(driver, 4).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[aria-label='Perfil']")))
         driver.execute_script("arguments[0].click()", profile)
         click_text(driver, "Sair", 8)
-        wait(driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, "//*[normalize-space()='Com uma conta Geekie One']"))
-        )
+        wait(driver, 20).until(lambda d: (
+            bool(d.find_elements(By.XPATH, "//*[normalize-space()='Com uma conta Geekie One']"))
+            or bool([field for field in d.find_elements(By.CSS_SELECTOR, "input") if field.is_displayed() and normalize_text(field.get_attribute("type")) == "password"])
+        ))
         return
     except TimeoutException:
         driver.execute_script(
@@ -257,9 +265,10 @@ def ensure_one_logged_out(driver):
         driver.delete_all_cookies()
         driver.get(ONE_URL)
         try:
-            wait(driver, 30).until(
-                EC.presence_of_element_located((By.XPATH, "//*[normalize-space()='Com uma conta Geekie One']"))
-            )
+            wait(driver, 30).until(lambda d: (
+                bool(d.find_elements(By.XPATH, "//*[normalize-space()='Com uma conta Geekie One']"))
+                or bool([field for field in d.find_elements(By.CSS_SELECTOR, "input") if field.is_displayed() and normalize_text(field.get_attribute("type")) == "password"])
+            ))
         except TimeoutException:
             raise RuntimeError("nao consegui deslogar do Geekie One antes de trocar de aluno")
 
@@ -330,30 +339,83 @@ def reset_password(driver, link, name):
         print("Senha redefinida com sucesso.")
 
 
-def login_one(driver, login_id, used_usernames=None):
-    ensure_one_logged_out(driver)
-    driver.get(ONE_URL)
+def one_login_fields(driver, seconds=20):
+    def fields(d):
+        visible = [field for field in d.find_elements(By.CSS_SELECTOR, "input") if field.is_displayed()]
+        password = [field for field in visible if normalize_text(field.get_attribute("data-testid")) == "password-input"]
+        if not password:
+            password = [field for field in visible if normalize_text(field.get_attribute("type")) == "password"]
+        user = [
+            field for field in visible
+            if normalize_text(field.get_attribute("data-testid")) in ("user-input", "username-input", "email-input")
+        ]
+        if not user:
+            user = [
+                field for field in visible
+            if any(token in normalize_text(" ".join(
+                field.get_attribute(name) or "" for name in ("placeholder", "aria-label", "name")
+            )) for token in ("usuario", "email"))
+            ]
+        if user and password:
+            return [user[0], password[0]]
+        text_inputs = [field for field in visible if normalize_text(field.get_attribute("type")) in ("", "text")]
+        if text_inputs and password:
+            return [text_inputs[0], password[0]]
+        return False
+    return wait(driver, seconds).until(fields)
+
+
+def open_one_login(driver):
+    """Aceita a tela antiga com etapa intermediaria e a tela nova ja direta."""
     dismiss_notification_popup(driver)
     try:
         click_text(driver, "Usar Aqui", 2)
     except TimeoutException:
         pass
-    click_text(driver, "Com uma conta Geekie One")
-    visible = wait(driver, 20).until(
-        lambda d: [field for field in d.find_elements(By.CSS_SELECTOR, "input") if field.is_displayed()]
-    )
+    try:
+        return one_login_fields(driver, 2)
+    except TimeoutException:
+        click_text(driver, "Com uma conta Geekie One", 10)
+        return one_login_fields(driver, 20)
+
+
+def login_one(driver, login_id, used_usernames=None):
+    ensure_one_logged_out(driver)
+    driver.get(ONE_URL)
+    visible = open_one_login(driver)
     if len(visible) < 2:
         raise RuntimeError("campos de login do Geekie One nao encontrados")
     # Usa o login_id (que agora serÃ¡ o e-mail)
-    fill_field(driver, visible[0], login_id)
-    password_fields = [field for field in visible if normalize_text(field.get_attribute("type")) == "password"]
-    pw_field = (password_fields or visible[1:])[-1]
-    fill_field(driver, pw_field, PASSWORD)
-    # Verificar se a senha foi preenchida
-    pw_val = pw_field.get_attribute("value") or ""
-    if not pw_val:
-        raise RuntimeError("senha nao preenchida no campo de login do Geekie One")
-    click_text(driver, "Acessar")
+    user_field, pw_field = visible[0], visible[1]
+
+    def fill_and_verify(field, value, label):
+        for _ in range(3):
+            fill_field(driver, field, value)
+            current = field.get_attribute("value") or ""
+            if current == str(value):
+                return
+            try:
+                ActionChains(driver).move_to_element(field).click().key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).send_keys(str(value)).perform()
+                if (field.get_attribute("value") or "") == str(value):
+                    return
+            except Exception:
+                pass
+            try:
+                if label == "usuario":
+                    field = wait(driver, 3).until(EC.visibility_of_element_located((
+                        By.CSS_SELECTOR,
+                        "input[data-testid='user-input'], input[data-testid='username-input'], input[data-testid='email-input'], input[placeholder*='usuário'], input[placeholder*='usuario']",
+                    )))
+                else:
+                    field = wait(driver, 3).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[data-testid='password-input'], input[type='password']")))
+            except TimeoutException:
+                pass
+        raise RuntimeError(f"campo de {label} nao foi preenchido no Geekie One")
+
+    fill_and_verify(user_field, login_id, "usuario")
+    fill_and_verify(pw_field, PASSWORD, "senha")
+    # Texto exato: evita confundir o login normal com Google, Microsoft ou Apple.
+    click_text(driver, "Acessar", 10)
     start = time.time()
     invalid_markers = (
         "usuariosenha invalidos",
@@ -1812,8 +1874,46 @@ def search_lab(driver, name, email=None):
                 continue
         if not matches:
             return False
+
+        def is_inactive(card):
+            """Detects both the old CSS marker and the visible Lab status text."""
+            try:
+                if card.find_elements(By.CSS_SELECTOR, ".inactive-warning:not(.ng-hide)"):
+                    return True
+                card_text = normalize_text(card.text)
+                return "usuario inativo" in card_text or "usuaria inativa" in card_text
+            except StaleElementReferenceException:
+                return True
+
+        # A search can return an old removed account and the current account
+        # with the same name. The removed card often has no reset-link action.
+        # Keep it only as a fallback when no active match exists.
+        active_matches = [element for element in matches if not is_inactive(element)]
+        if active_matches:
+            if len(active_matches) != len(matches):
+                print("Aviso: resultados duplicados no Lab; priorizando o usuario ativo.")
+            matches = active_matches
+
+        def has_info_action(card):
+            try:
+                buttons = card.find_elements(
+                    By.XPATH,
+                    ".//button[contains(@tooltip, 'Ver') and "
+                    "(contains(@tooltip, 'informa') or contains(@tooltip, 'Informa'))]",
+                )
+                return bool(buttons or card.find_elements(By.CSS_SELECTOR, "button[tooltip]"))
+            except StaleElementReferenceException:
+                return False
+
         try:
-            return min(matches, key=lambda element: element.size["width"] * element.size["height"])
+            # The Lab places the active duplicate below the removed one. When
+            # both records expose the same e-mail and the status marker is not
+            # available in the card text, prefer the later actionable card.
+            ranked = sorted(
+                enumerate(matches),
+                key=lambda item: (is_inactive(item[1]), not has_info_action(item[1]), -item[0]),
+            )
+            return ranked[0][1]
         except StaleElementReferenceException:
             return False
 
@@ -1852,6 +1952,11 @@ def search_lab(driver, name, email=None):
 
     # Verificar se o aluno estÃ¡ inativo â€” nÃ£o bloquear, apenas avisar e continuar
     inactive = card.find_elements(By.CSS_SELECTOR, ".inactive-warning:not(.ng-hide)")
+    if not inactive:
+        try:
+            inactive = [card] if "usuario inativo" in normalize_text(card.text) else []
+        except StaleElementReferenceException:
+            inactive = []
     if inactive:
         print(f"Aviso: usuario inativo no Lab; tentando obter link de reset mesmo assim.")
 

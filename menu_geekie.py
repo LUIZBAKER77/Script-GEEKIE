@@ -85,9 +85,9 @@ def choose_sheets(workbook: Path, allow_many: bool) -> list[int]:
     return [int(selected)]
 
 
-def ask_start() -> int:
-    raw = input("Comecar em qual linha/aluno? (padrao 2): ").strip()
-    return int(raw or "2")
+def ask_start() -> int | None:
+    raw = input("Comecar em qual linha/aluno? (Enter = primeiro pendente): ").strip()
+    return int(raw) if raw else None
 
 
 def latest_audit_file() -> Path | None:
@@ -108,17 +108,19 @@ def run_command(args: list[str]) -> int:
 def process_run(workbook: Path) -> int:
     sheets = choose_sheets(workbook, allow_many=False)
     start = ask_start()
-    return run_command([
+    print("O script vai pular alunos que ja possuem usuario e iniciar na primeira pendencia.")
+    command = [
         sys.executable,
         "geekie_automation.py",
         "run",
         str(workbook),
         "--sheet-index",
         str(sheets[0]),
-        "--start",
-        str(start),
         "--continue-on-error",
-    ])
+    ]
+    if start is not None:
+        command[6:6] = ["--start", str(start)]
+    return run_command(command)
 
 
 def process_audit(workbook: Path) -> int:

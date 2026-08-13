@@ -27,22 +27,14 @@ def expected_class_parts(class_code):
 def login_for_audit(driver, email):
     g.ensure_one_logged_out(driver)
     driver.get(g.ONE_URL)
-    g.dismiss_notification_popup(driver)
-    try:
-        g.click_text(driver, "Usar Aqui", 2)
-    except TimeoutException:
-        pass
-    g.click_text(driver, "Com uma conta Geekie One")
-    visible = g.wait(driver, 20).until(
-        lambda d: [field for field in d.find_elements(By.CSS_SELECTOR, "input") if field.is_displayed()]
-    )
+    visible = g.open_one_login(driver)
     if len(visible) < 2:
         raise RuntimeError("campos de login nao encontrados")
     g.fill_field(driver, visible[0], email)
     password_fields = [field for field in visible if g.normalize_text(field.get_attribute("type")) == "password"]
     pw_field = (password_fields or visible[1:])[-1]
     g.fill_field(driver, pw_field, g.PASSWORD)
-    g.click_text(driver, "Acessar")
+    g.click_enabled_contains(driver, "Acessar", 10)
     start = time.time()
     invalid_markers = (
         "usuariosenha invalidos",
