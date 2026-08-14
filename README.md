@@ -1,6 +1,6 @@
 # Automação Geekie
 
-Kit privado de automação para rotinas administrativas no Geekie One, incluindo correção de turmas, criação de contas e auditoria de alunos.
+Kit de automação para rotinas administrativas no Geekie One, incluindo correção de turmas, criação de contas e auditoria de alunos.
 
 ## Funcionalidades
 
@@ -53,4 +53,3 @@ Esses caminhos estão cobertos pelo `.gitignore`. Não documente senhas reais ou
 - Google Chrome;
 - dependências Python utilizadas pelos scripts.
 
-> Repositório privado com finalidade administrativa. Revise os dados antes de compartilhar arquivos ou conceder acesso.
