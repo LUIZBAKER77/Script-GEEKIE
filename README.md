@@ -34,17 +34,6 @@ Ao iniciar, o `geekie.bat` pergunta qual senha padrao deve ser usada naquela exe
 
 Se o Geekie solicitar autenticação, faça login na janela do Chrome aberta pela automação e retorne ao terminal.
 
-## Dados locais
-
-Os seguintes itens não devem ser enviados ao GitHub:
-
-- planilhas com dados de alunos;
-- perfis do Chrome e sessões autenticadas;
-- resultados de auditoria;
-- arquivos antigos ou temporários;
-- senhas e credenciais.
-
-Esses caminhos estão cobertos pelo `.gitignore`. Não documente senhas reais ou padrão no repositório.
 
 ## Requisitos
 
