@@ -23,7 +23,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 LAB_URL = "https://educadores.geekieteste.geekie.com.br/"
 ONE_URL = "https://one.geekie.com.br/"
-PASSWORD = os.environ.get("GEEKIE_PASSWORD", "REMOVIDO")
+PASSWORD = os.environ.get("GEEKIE_PASSWORD", "")
+# Sufixo que a escola acrescenta ao e-mail (ex.: "nome.sobrenome-tag@dominio").
+EMAIL_TAG = os.environ.get("GEEKIE_EMAIL_TAG", "")
 PROFILE = Path(__file__).with_name("chrome_profile")
 CHROME_USER_DATA = Path.home() / "AppData/Local/Google/Chrome/User Data"
 ERRORS = Path(__file__).with_name("erros.csv")
@@ -126,9 +128,15 @@ def normalize_ascii(value):
     return "".join(ch for ch in text if not unicodedata.combining(ch))
 
 
+def strip_email_tag(local):
+    if not EMAIL_TAG:
+        return local
+    return re.sub(rf"-{re.escape(EMAIL_TAG)}.*$", "", local)
+
+
 def username_from_email(email, used_usernames):
     local = str(email).split("@", 1)[0].lower()
-    local = re.sub(r"-escola.*$", "", local)
+    local = strip_email_tag(local)
     base = re.sub(r"[^a-z0-9]", "", normalize_ascii(local))
     if not base:
         raise RuntimeError(f"email invalido para gerar usuario: {email}")
@@ -1779,7 +1787,7 @@ def search_lab(driver, name, email=None):
             terms.append(name_parts[0])
         if email:
             local = str(email).split("@", 1)[0]
-            local = re.sub(r"-escola.*$", "", local)
+            local = strip_email_tag(local)
             email_parts = [part for part in re.split(r"[._\\-]+", local) if part]
             if len(email_parts) >= 2:
                 terms.append(" ".join(email_parts[:2]))
